@@ -1,33 +1,13 @@
-from pathlib import Path
-import shutil
+from organizer import organize_downloads
 
-# Organizador de archivos en la carpeta de Descargas
-downloads = Path.home() / "Downloads"
 
-# Reglas de organización: extensión de archivo -> carpeta destino
-rules = {
-    ".pdf": "Documentos",
-    ".png": "Imagenes",
-    ".jpg": "Imagenes",
-    ".mp4": "Videos"
-}
+def main() -> None:
+	"""Punto de entrada de la aplicación."""
+	moved_files = organize_downloads()
 
-# Crear carpetas según las reglas
-for file in downloads.iterdir():
+	for source, destination in moved_files:
+		print(source.name, "->", destination.parent.name)
 
-    # Verificar si es un archivo (no una carpeta)
-    if file.is_file():
-        ext = file.suffix.lower()
 
-        # Determinar la carpeta destino según la extensión del archivo
-        if ext in rules:
-            folder = downloads / rules[ext]
-        else:
-            folder = downloads / "Otros"
-
-        # Crear la carpeta si no existe y mover el archivo
-        folder.mkdir(exist_ok=True)
-        shutil.move(str(file), str(folder / file.name))
-        
-        # Imprimir el resultado de la organización
-        print(file.name, "->", folder)
+if __name__ == "__main__":
+	main()
