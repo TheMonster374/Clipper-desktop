@@ -2,11 +2,19 @@ from organizer import organize_downloads
 
 
 def main() -> None:
-	"""Punto de entrada de la aplicación."""
-	moved_files = organize_downloads()
+	"""Función principal del programa. Organiza los archivos de la carpeta Descargas"""
+	moved_files, errors = organize_downloads()
 
 	for source, destination in moved_files:
-		print(source.name, "->", destination.parent.name)
+		print("Archivo movido:", source.name, "a", destination.parent.name)
+
+	if errors:
+		print("\nErrores registrados:")
+		for item in errors:
+			origin = item[0]
+			type_ = item[1]
+			msg = item[2]
+			print(f"{origin.name} : {type_} - {msg}")
 
 
 if __name__ == "__main__":
