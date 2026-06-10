@@ -3,7 +3,7 @@ import shutil
 import logging
 from typing import Tuple, List
 
-from rules import rules
+import config
 
 # Logger para registrar errores persistentes
 logger = logging.getLogger("clipper.organizer")
@@ -47,8 +47,8 @@ def organize_downloads(
 
             ext = file.suffix.lower()
 
-            if ext in rules:
-                folder = downloads / rules[ext]
+            if ext in config.rules:
+                folder = downloads / config.rules[ext]
             else:
                 folder = downloads / "Otros"
 
