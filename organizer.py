@@ -4,6 +4,7 @@ import logging
 from typing import Tuple, List
 
 import config
+from database import DEFAULT_DB_PATH, add_error, add_history
 
 # Logger para registrar errores persistentes
 logger = logging.getLogger("clipper.organizer")
@@ -17,6 +18,7 @@ if not logger.handlers:
 
 def organize_downloads(
     downloads: Path | None = None,
+    db_path: str = DEFAULT_DB_PATH,
 ) -> Tuple[List[tuple[Path, Path]], List[tuple[Path, str, str]]]:
     """Organiza los archivos de la carpeta Descargas según las reglas definidas.
 
@@ -38,11 +40,15 @@ def organize_downloads(
         msg = f"No se puede listar la carpeta {downloads}: {e}"
         logger.error(msg)
         errors.append((downloads, type(e).__name__, str(e)))
+        add_error(str(downloads), type(e).__name__, str(e), db_path)
         return moved_files, errors
 
     for file in entries:
         try:
             if not file.is_file():
+                continue
+
+            if file.resolve() == Path(db_path).resolve():
                 continue
 
             ext = file.suffix.lower()
@@ -59,6 +65,7 @@ def organize_downloads(
                 msg = f"No se pudo crear la carpeta destino {folder}: {e}"
                 logger.warning("%s - %s", file, msg)
                 errors.append((file, type(e).__name__, str(e)))
+                add_error(str(file), type(e).__name__, str(e), db_path)
                 continue
 
             destination = folder / file.name
@@ -68,26 +75,31 @@ def organize_downloads(
                 msg = f"Destino ya existe: {destination}"
                 logger.info("%s - %s", file, msg)
                 errors.append((file, "DestinationExists", msg))
+                add_error(str(file), "DestinationExists", msg, db_path)
                 continue
 
             try:
                 shutil.move(str(file), str(destination))
                 moved_files.append((file, destination))
+                add_history(str(file), str(file.parent), str(destination.parent), db_path)
             except PermissionError as e:
                 msg = f"Sin permisos o archivo en uso: {e}"
                 logger.warning("%s - %s", file, msg)
                 errors.append((file, "PermissionError", str(e)))
+                add_error(str(file), "PermissionError", str(e), db_path)
                 continue
             except (OSError, shutil.Error) as e:
                 msg = f"Error al mover: {e}"
                 logger.warning("%s - %s", file, msg)
                 errors.append((file, type(e).__name__, str(e)))
+                add_error(str(file), type(e).__name__, str(e), db_path)
                 continue
 
         except Exception as e:
             # Capturamos errores inesperados por archivo y continuamos
             logger.exception("Error inesperado procesando %s: %s", file, e)
             errors.append((file, type(e).__name__, str(e)))
+            add_error(str(file), type(e).__name__, str(e), db_path)
 
     return moved_files, errors
 
