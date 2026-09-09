@@ -10,15 +10,15 @@ El flujo actual está dividido en tres módulos:
 - [organizer.py](organizer.py): contiene la lógica principal para recorrer Downloads, decidir el destino y mover cada archivo.
 - [rules.json](rules.json): define las extensiones y carpetas destino.
 
-## Reglas actuales
+## Reglas predeterminadas
 
 | Extensión | Carpeta      |
 | --------- | ------------ |
 | `.pdf`    | `Documentos` |
-| `.png`    | `Imagenes`   |
-| `.jpg`    | `Imagenes`   |
+| `.png`, `.jpg`,`.jpeg`    | `Imagenes`   |
 | `.mp4`    | `Videos`     |
 
+`NUEVO:` Ya es posible agregar/quitar reglas personalizadas
 Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
 ## Estructura del proyecto
