@@ -1,31 +1,37 @@
 # 📎 Clipper
 
-Clipper es una pequeña aplicación en Python para organizar archivos de la carpeta Descargas usando reglas por extensión. Detecta la ubicación configurada en Windows, Linux y macOS.
+Clipper es una aplicación de escritorio en Python para organizar archivos de la carpeta Descargas usando reglas por extensión. Detecta la ubicación configurada en Windows, Linux y macOS.
 
 ## Cómo funciona
 
-El flujo actual está dividido en tres módulos:
+El flujo actual está dividido en varios módulos:
 
-- [main.py](main.py): punto de entrada. Llama al organizador y muestra qué archivos se movieron.
-- [organizer.py](organizer.py): contiene la lógica principal para recorrer Downloads, decidir el destino y mover cada archivo.
-- [rules.json](rules.json): define las extensiones y carpetas destino.
+- [main.py](main.py): interfaz gráfica y modo de terminal.
+- [organizer.py](organizer.py): vista previa y lógica para decidir destinos y mover archivos.
+- [config.py](config.py): carga, guarda y define las reglas predeterminadas.
+- [rules.json](rules.json): reglas configurables por extensión.
+- [database.py](database.py): historial de movimientos y registro de errores en SQLite.
+- [paths.py](paths.py): rutas multiplataforma para Descargas, datos y logs.
+- [tests/test_organizer.py](tests/test_organizer.py): pruebas automatizadas.
 
 ## Reglas actuales
 
-| Extensión | Carpeta      |
-| --------- | ------------ |
-| `.pdf`    | `Documentos` |
-| `.png`    | `Imagenes`   |
-| `.jpg`    | `Imagenes`   |
-| `.mp4`    | `Videos`     |
+| Extensiones              | Carpeta      |
+| ------------------------ | ------------ |
+| `.pdf`                   | `Documentos` |
+| `.jpg`, `.jpeg`, `.png` | `Imagenes`   |
+| `.mp4`                   | `Videos`     |
 
 Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
 ## Estructura del proyecto
 
-- `main.py`: ejecuta la app.
-- `organizer.py`: contiene `organize_downloads()`.
-- `rules.json`: almacena las reglas de organización.
+- `main.py`: ejecuta la interfaz o el modo CLI.
+- `organizer.py`: contiene `preview_downloads()` y `organize_downloads()`.
+- `config.py` y `rules.json`: almacenan y gestionan las reglas.
+- `database.py`: gestiona la base de datos SQLite.
+- `paths.py`: resuelve las rutas según el sistema operativo.
+- `tests/`: contiene las pruebas automatizadas.
 
 ## Cómo ejecutar
 
@@ -60,7 +66,8 @@ python3 main.py --cli
 3. Detecta la extensión de cada archivo.
 4. Crea la carpeta destino si no existe.
 5. Mueve el archivo a la carpeta correspondiente.
-6. Imprime en consola el nombre del archivo y la carpeta destino.
+6. Muestra una vista previa y pide confirmación antes de mover archivos desde la interfaz.
+7. Registra los movimientos y errores en SQLite.
 
 ## Interfaz de escritorio
 
@@ -78,44 +85,38 @@ La interfaz permite:
 
 ### V0.1
 
-- Lectura de archivos en Descargas
-- Detección de extensiones
-- Creación automática de carpetas
-- Organización básica por tipo de archivo
-- Detección de la carpeta Descargas en Windows, Linux y macOS
-- Registro persistente en la carpeta de datos del usuario
+- Organización por extensión con carpeta `Otros` para archivos sin regla.
+- Detección multiplataforma de la carpeta Descargas.
+- Interfaz gráfica y modo de terminal.
+- Reglas editables, agrupación de extensiones y restauración de valores predeterminados.
+- Vista previa y confirmación antes de mover archivos.
+- Historial y errores persistentes en SQLite.
+- Pruebas automatizadas para la lógica principal.
 
 ## Tecnologías
 
 - Python
+- Tkinter
 - pathlib
 - shutil
+- SQLite
+- platformdirs
 
-## Roadmap
+## Pruebas
 
-### V1
+Desde la carpeta del proyecto:
 
-- Organización por categorías
+```bash
+python3 -W error -m unittest discover -s tests -v
+```
 
-### V2
+## Próximos pasos
 
-- Integración con carpetas del sistema
-
-### V3
-
-- Historial de movimientos
-
-### V4
-
-- Búsqueda rápida
-
-### V5
-
-- Clasificación inteligente mediante IA
-
-### V6
-
-- Asistente flotante estilo clip
+- Mejorar el diseño visual de la interfaz.
+- Añadir búsqueda y filtros al historial.
+- Permitir exportar el historial.
+- Añadir configuración de ejecución automática o programación.
+- Preparar paquetes instalables para Windows, Linux y macOS.
 
 ## Autor
 
