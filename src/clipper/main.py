@@ -293,7 +293,7 @@ class ClipperApp:
 		query = query.strip().lower()
 		if not query:
 			return rows
-		return [row for row in rows if query in str(row[0]).lower()]
+		return [row for row in rows if query in Path(str(row[0])).name.lower()]
 
 	@staticmethod
 	def _fill_tree(tree: ttk.Treeview, rows: list[tuple]) -> None:

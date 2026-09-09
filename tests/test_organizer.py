@@ -81,8 +81,8 @@ class OrganizerTests(unittest.TestCase):
 
     def test_filters_history_rows_case_insensitively(self) -> None:
         rows = [
-            ("foto.png", "/tmp/Descargas", "/tmp/Imagenes", "fecha"),
-            ("manual.pdf", "/tmp/Descargas", "/tmp/Documentos", "fecha"),
+            ("/tmp/Imagenes/foto.png", "/tmp/Descargas", "/tmp/Imagenes", "fecha"),
+            ("/tmp/Documentos/manual.pdf", "/tmp/Descargas", "/tmp/Documentos", "fecha"),
         ]
 
         filtered = ClipperApp.filter_rows(rows, "FOTO")
@@ -90,7 +90,7 @@ class OrganizerTests(unittest.TestCase):
         self.assertEqual(filtered, [rows[0]])
 
     def test_file_filter_does_not_search_paths(self) -> None:
-        rows = [("foto.png", "/tmp/Imagenes", "/tmp/Imagenes", "fecha")]
+        rows = [("/tmp/Imagenes/foto.png", "/tmp/Descargas", "/tmp/Imagenes", "fecha")]
 
         filtered = ClipperApp.filter_rows(rows, "imagenes")
 
