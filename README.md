@@ -16,11 +16,11 @@ El flujo actual está dividido en varios módulos:
 
 ## Reglas actuales
 
-| Extensiones              | Carpeta      |
-| ------------------------ | ------------ |
-| `.pdf`                   | `Documentos` |
+| Extensiones             | Carpeta      |
+| ----------------------- | ------------ |
+| `.pdf`                  | `Documentos` |
 | `.jpg`, `.jpeg`, `.png` | `Imagenes`   |
-| `.mp4`                   | `Videos`     |
+| `.mp4`                  | `Videos`     |
 
 Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
