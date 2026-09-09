@@ -1,0 +1,46 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+import organizer
+
+
+class OrganizerTests(unittest.TestCase):
+    def test_organizes_known_and_unknown_extensions(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloads = Path(temp_dir) / "Descargas"
+            downloads.mkdir()
+            database = Path(temp_dir) / "clipper.db"
+            pdf = downloads / "manual.pdf"
+            archive = downloads / "archivo.xyz"
+            pdf.write_text("pdf", encoding="utf-8")
+            archive.write_text("archivo", encoding="utf-8")
+
+            moved, errors = organizer.organize_downloads(downloads, str(database))
+
+            self.assertEqual(errors, [])
+            self.assertEqual(len(moved), 2)
+            self.assertTrue((downloads / "Documentos" / "manual.pdf").exists())
+            self.assertTrue((downloads / "Otros" / "archivo.xyz").exists())
+
+    def test_does_not_overwrite_existing_destination(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloads = Path(temp_dir) / "Descargas"
+            documents = downloads / "Documentos"
+            documents.mkdir(parents=True)
+            database = Path(temp_dir) / "clipper.db"
+            source = downloads / "manual.pdf"
+            destination = documents / source.name
+            source.write_text("nuevo", encoding="utf-8")
+            destination.write_text("original", encoding="utf-8")
+
+            moved, errors = organizer.organize_downloads(downloads, str(database))
+
+            self.assertEqual(moved, [])
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0][1], "DestinationExists")
+            self.assertEqual(destination.read_text(encoding="utf-8"), "original")
+
+
+if __name__ == "__main__":
+    unittest.main()

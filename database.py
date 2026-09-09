@@ -1,12 +1,15 @@
 import sqlite3
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DB_PATH = str(BASE_DIR / 'clipper.db')
+from paths import database_path
+
+
+DEFAULT_DB_PATH = str(database_path())
 
 def create_tables(db_path: str = DEFAULT_DB_PATH) -> None:
     """Crea las tablas 'history' y 'errors' si no existen."""
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
@@ -40,7 +43,7 @@ def create_tables(db_path: str = DEFAULT_DB_PATH) -> None:
 
 def now_iso() -> str:
     """Fecha y hora en formato ISO (UTC)."""
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 def add_history(archivo: str, carpeta_origen: str, carpeta_destino: str, db_path: str = DEFAULT_DB_PATH, fecha: str | None = None) -> None:
     fecha = fecha or now_iso()

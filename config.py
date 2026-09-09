@@ -1,11 +1,12 @@
 import json
+from pathlib import Path
+
+from paths import RULES_PATH
 
 
-def cargarReglas():
-    archivo = open('rules.json', 'r')
-    rules = json.load(archivo)
-    archivo.close()
+def cargar_reglas(path: Path = RULES_PATH) -> dict[str, str]:
+    with path.open("r", encoding="utf-8") as archivo:
+        return json.load(archivo)
 
-    return rules
 
-rules = cargarReglas()
+rules = cargar_reglas()

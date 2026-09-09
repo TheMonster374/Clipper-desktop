@@ -1,6 +1,6 @@
 # 📎 Clipper
 
-Clipper es una pequeña aplicación en Python para organizar archivos de la carpeta Downloads usando reglas por extensión.
+Clipper es una pequeña aplicación en Python para organizar archivos de la carpeta Descargas usando reglas por extensión. Detecta la ubicación configurada en Windows, Linux y macOS.
 
 ## Cómo funciona
 
@@ -8,16 +8,16 @@ El flujo actual está dividido en tres módulos:
 
 - [main.py](main.py): punto de entrada. Llama al organizador y muestra qué archivos se movieron.
 - [organizer.py](organizer.py): contiene la lógica principal para recorrer Downloads, decidir el destino y mover cada archivo.
-- [rules.py](rules.py): define el diccionario de extensiones y carpetas destino.
+- [rules.json](rules.json): define las extensiones y carpetas destino.
 
 ## Reglas actuales
 
-| Extensión | Carpeta |
-| --- | --- |
-| `.pdf` | `Documentos` |
-| `.png` | `Imagenes` |
-| `.jpg` | `Imagenes` |
-| `.mp4` | `Videos` |
+| Extensión | Carpeta      |
+| --------- | ------------ |
+| `.pdf`    | `Documentos` |
+| `.png`    | `Imagenes`   |
+| `.jpg`    | `Imagenes`   |
+| `.mp4`    | `Videos`     |
 
 Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
@@ -25,19 +25,26 @@ Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
 - `main.py`: ejecuta la app.
 - `organizer.py`: contiene `organize_downloads()`.
-- `rules.py`: almacena `rules`.
+- `rules.json`: almacena las reglas de organización.
 
 ## Cómo ejecutar
 
 Desde la carpeta del proyecto:
 
+````bash
+python3 main.py
+
+Antes de ejecutar, instala la dependencia multiplataforma:
+
 ```bash
-python main.py
+python3 -m pip install -r requirements.txt
+````
+
 ```
 
 ## Qué hace el programa
 
-1. Busca la carpeta `Downloads` del usuario actual.
+1. Busca la carpeta Descargas configurada por el sistema operativo.
 2. Recorre sus archivos.
 3. Detecta la extensión de cada archivo.
 4. Crea la carpeta destino si no existe.
@@ -51,6 +58,8 @@ python main.py
 - Detección de extensiones
 - Creación automática de carpetas
 - Organización básica por tipo de archivo
+- Detección de la carpeta Descargas en Windows, Linux y macOS
+- Registro persistente en la carpeta de datos del usuario
 
 ## Tecnologías
 
@@ -81,3 +90,4 @@ python main.py
 ## Autor
 
 Proyecto personal desarrollado como práctica de programación y automatización.
+```

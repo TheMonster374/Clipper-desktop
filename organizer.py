@@ -5,11 +5,14 @@ from typing import Tuple, List
 
 import config
 from database import DEFAULT_DB_PATH, add_error, add_history
+from paths import downloads_dir, log_path
 
 # Logger para registrar errores persistentes
 logger = logging.getLogger("clipper.organizer")
 if not logger.handlers:
-    handler = logging.FileHandler("clipper_errors.log", encoding="utf-8")
+    log_file = log_path()
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    handler = logging.FileHandler(log_file, encoding="utf-8")
     formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -23,14 +26,14 @@ def organize_downloads(
     """Organiza los archivos de la carpeta Descargas según las reglas definidas.
 
     Args:
-        downloads: Carpeta a organizar. Si no se indica, usa la carpeta Downloads
-            del usuario actual.
+        downloads: Carpeta a organizar. Si no se indica, usa la carpeta Descargas
+            configurada por el sistema operativo.
 
     Returns:
         Tupla con 1) lista de tuplas (archivo original, nueva ubicación) y
         2) lista de errores como tuplas (archivo, tipo_error, mensaje).
     """
-    downloads = downloads or Path.home() / "Downloads"
+    downloads = downloads or downloads_dir()
     moved_files: List[tuple[Path, Path]] = []
     errors: List[tuple[Path, str, str]] = []
 
