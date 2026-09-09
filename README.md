@@ -14,7 +14,7 @@ El flujo actual está dividido en varios módulos:
 - [paths.py](paths.py): rutas multiplataforma para Descargas, datos y logs.
 - [tests/test_organizer.py](tests/test_organizer.py): pruebas automatizadas.
 
-## Reglas actuales
+## Reglas predeterminadas
 
 | Extensiones             | Carpeta      |
 | ----------------------- | ------------ |
@@ -22,6 +22,7 @@ El flujo actual está dividido en varios módulos:
 | `.jpg`, `.jpeg`, `.png` | `Imagenes`   |
 | `.mp4`                  | `Videos`     |
 
+También es posible agregar, quitar y editar reglas personalizadas desde la interfaz.
 Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
 ## Estructura del proyecto
