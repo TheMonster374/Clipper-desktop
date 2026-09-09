@@ -65,6 +65,30 @@ def add_error(archivo: str | None, tipo_error: str, mensaje: str, db_path: str =
     conn.commit()
     conn.close()
 
+
+def get_history(db_path: str = DEFAULT_DB_PATH, limit: int = 100) -> list[tuple]:
+    create_tables(db_path)
+    conn = sqlite3.connect(db_path)
+    rows = conn.execute(
+        "SELECT archivo, carpeta_origen, carpeta_destino, fecha "
+        "FROM history ORDER BY id DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return rows
+
+
+def get_errors(db_path: str = DEFAULT_DB_PATH, limit: int = 100) -> list[tuple]:
+    create_tables(db_path)
+    conn = sqlite3.connect(db_path)
+    rows = conn.execute(
+        "SELECT archivo, tipo_error, mensaje, fecha "
+        "FROM errors ORDER BY id DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return rows
+
 if __name__ == '__main__':
     create_tables()
     print("Tablas 'history' y 'errors' creadas en clipper.db")

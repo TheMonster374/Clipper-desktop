@@ -31,15 +31,26 @@ Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
 Desde la carpeta del proyecto:
 
-````bash
+```bash
 python3 main.py
+```
 
 Antes de ejecutar, instala la dependencia multiplataforma:
 
 ```bash
 python3 -m pip install -r requirements.txt
-````
+```
 
+En Linux Mint, instala también el soporte de interfaz gráfica si no está disponible:
+
+```bash
+sudo apt install python3-tk
+```
+
+La aplicación abre una interfaz de escritorio. Para usar la versión de terminal:
+
+```bash
+python3 main.py --cli
 ```
 
 ## Qué hace el programa
@@ -51,9 +62,19 @@ python3 -m pip install -r requirements.txt
 5. Mueve el archivo a la carpeta correspondiente.
 6. Imprime en consola el nombre del archivo y la carpeta destino.
 
+## Interfaz de escritorio
+
+La interfaz permite:
+
+- Consultar y cambiar la carpeta que se va a organizar.
+- Editar y guardar las reglas por extensión.
+- Ejecutar la organización sin sobrescribir archivos existentes.
+- Consultar el historial de movimientos y los errores registrados.
+
 ## Estado actual
 
 ### V0.1
+
 - Lectura de archivos en Descargas
 - Detección de extensiones
 - Creación automática de carpetas
@@ -70,24 +91,33 @@ python3 -m pip install -r requirements.txt
 ## Roadmap
 
 ### V1
+
 - Organización por categorías
 
 ### V2
+
 - Integración con carpetas del sistema
 
 ### V3
+
 - Historial de movimientos
 
 ### V4
+
 - Búsqueda rápida
 
 ### V5
+
 - Clasificación inteligente mediante IA
 
 ### V6
+
 - Asistente flotante estilo clip
 
 ## Autor
 
 Proyecto personal desarrollado como práctica de programación y automatización.
+
+```
+
 ```

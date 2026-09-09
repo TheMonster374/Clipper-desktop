@@ -2,6 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import config
+from database import add_error, add_history, get_errors, get_history
 import organizer
 
 
@@ -40,6 +42,24 @@ class OrganizerTests(unittest.TestCase):
             self.assertEqual(len(errors), 1)
             self.assertEqual(errors[0][1], "DestinationExists")
             self.assertEqual(destination.read_text(encoding="utf-8"), "original")
+
+    def test_reads_history_and_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database = str(Path(temp_dir) / "clipper.db")
+            add_history("a.pdf", "Descargas", "Documentos", database)
+            add_error("b.zip", "DestinationExists", "El destino ya existe", database)
+
+            self.assertEqual(get_history(database)[0][0], "a.pdf")
+            self.assertEqual(get_errors(database)[0][1], "DestinationExists")
+
+    def test_saves_rules_to_a_custom_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            rules_path = Path(temp_dir) / "rules.json"
+            new_rules = {".txt": "Texto"}
+
+            config.guardar_reglas(new_rules, rules_path)
+
+            self.assertEqual(config.cargar_reglas(rules_path), new_rules)
 
 
 if __name__ == "__main__":
