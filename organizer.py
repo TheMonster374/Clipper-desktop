@@ -19,6 +19,31 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
+def preview_downloads(
+    downloads: Path,
+    db_path: str = DEFAULT_DB_PATH,
+) -> tuple[list[tuple[Path, Path]], list[tuple[Path, str, str]]]:
+    """Calcula movimientos posibles sin modificar archivos ni la base de datos."""
+    planned: list[tuple[Path, Path]] = []
+    errors: list[tuple[Path, str, str]] = []
+    try:
+        entries = list(downloads.iterdir())
+    except OSError as error:
+        return [], [(downloads, type(error).__name__, str(error))]
+
+    for file in entries:
+        if not file.is_file() or file.resolve() == Path(db_path).resolve():
+            continue
+        extension = file.suffix.lower()
+        folder = downloads / config.rules.get(extension, "Otros")
+        destination = folder / file.name
+        if destination.exists():
+            errors.append((file, "DestinationExists", f"Destino ya existe: {destination}"))
+        else:
+            planned.append((file, destination))
+    return planned, errors
+
+
 def organize_downloads(
     downloads: Path | None = None,
     db_path: str = DEFAULT_DB_PATH,

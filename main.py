@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 
 import config
 from database import DEFAULT_DB_PATH, create_tables, get_errors, get_history
-from organizer import organize_downloads
+from organizer import organize_downloads, preview_downloads
 from paths import downloads_dir
 
 
@@ -63,20 +63,72 @@ class ClipperApp:
 	def _build_rules_tab(self) -> None:
 		ttk.Label(self.rules_frame, text="Extensión").grid(row=0, column=0, sticky="w")
 		ttk.Label(self.rules_frame, text="Carpeta destino").grid(row=0, column=1, sticky="w")
-		for row, (extension, folder) in enumerate(sorted(config.rules.items()), start=1):
-			extension_var = tk.StringVar(value=extension)
-			folder_var = tk.StringVar(value=folder)
-			self.rule_rows.append((extension_var, folder_var))
-			ttk.Entry(self.rules_frame, textvariable=extension_var, width=18).grid(
+		grouped_rules: dict[str, list[str]] = {}
+		for extension, folder in sorted(config.rules.items()):
+			grouped_rules.setdefault(folder, []).append(extension)
+		for extensions, folder in sorted(
+			([extensions, folder] for folder, extensions in grouped_rules.items()),
+			key=lambda item: item[1],
+		):
+			self._add_rule_row(", ".join(extensions), folder)
+		self.rules_frame.columnconfigure(1, weight=1)
+		self._refresh_rule_buttons()
+
+	def _add_rule_row(self, extensions: str = "", folder: str = "") -> None:
+		extension_var = tk.StringVar(value=extensions)
+		folder_var = tk.StringVar(value=folder)
+		self.rule_rows.append((extension_var, folder_var))
+		self._refresh_rule_rows()
+
+	def _refresh_rule_rows(self) -> None:
+		for child in self.rules_frame.grid_slaves():
+			if int(child.grid_info().get("row", 0)) > 0:
+				child.destroy()
+		for row, (extension_var, folder_var) in enumerate(self.rule_rows, start=1):
+			ttk.Entry(self.rules_frame, textvariable=extension_var, width=28).grid(
 				row=row, column=0, padx=(0, 8), pady=3, sticky="ew"
 			)
 			ttk.Entry(self.rules_frame, textvariable=folder_var).grid(
 				row=row, column=1, padx=(0, 8), pady=3, sticky="ew"
 			)
-		self.rules_frame.columnconfigure(1, weight=1)
-		ttk.Button(self.rules_frame, text="Guardar reglas", command=self.save_rules).grid(
-			row=len(self.rule_rows) + 1, column=1, sticky="e", pady=(12, 0)
+			ttk.Button(self.rules_frame, text="Quitar", command=lambda index=row - 1: self.remove_rule(index)).grid(
+				row=row, column=2, pady=3
+			)
+		self._refresh_rule_buttons()
+
+	def _refresh_rule_buttons(self) -> None:
+		for child in self.rules_frame.grid_slaves():
+			if int(child.grid_info().get("row", 0)) == len(self.rule_rows) + 1:
+				child.destroy()
+		button_row = len(self.rule_rows) + 1
+		ttk.Button(self.rules_frame, text="Añadir regla", command=lambda: self._add_rule_row()).grid(
+			row=button_row, column=0, sticky="w", pady=(12, 0)
 		)
+		ttk.Button(self.rules_frame, text="Restaurar predeterminadas", command=self.restore_default_rules).grid(
+			row=button_row, column=1, sticky="e", pady=(12, 0)
+		)
+		ttk.Button(self.rules_frame, text="Guardar reglas", command=self.save_rules).grid(
+			row=button_row, column=2, sticky="e", pady=(12, 0)
+		)
+
+	def remove_rule(self, index: int) -> None:
+		if len(self.rule_rows) == 1:
+			messagebox.showwarning("Reglas", "Debe quedar al menos una regla.")
+			return
+		self.rule_rows.pop(index)
+		self._refresh_rule_rows()
+
+	def restore_default_rules(self) -> None:
+		if not messagebox.askyesno("Restaurar reglas", "¿Reemplazar las reglas actuales por las predeterminadas?"):
+			return
+		self.rule_rows.clear()
+		grouped_rules: dict[str, list[str]] = {}
+		for extension, folder in config.DEFAULT_RULES.items():
+			grouped_rules.setdefault(folder, []).append(extension)
+		for folder, extensions in grouped_rules.items():
+			self.rule_rows.append((tk.StringVar(value=", ".join(extensions)), tk.StringVar(value=folder)))
+		self._refresh_rule_rows()
+		self.save_rules()
 
 	def _build_history_tab(self) -> None:
 		self.history_tree = self._build_tree(
@@ -112,13 +164,19 @@ class ClipperApp:
 
 	def save_rules(self) -> None:
 		new_rules: dict[str, str] = {}
+		seen_extensions: set[str] = set()
 		for extension_var, folder_var in self.rule_rows:
-			extension = extension_var.get().strip().lower()
 			folder = folder_var.get().strip()
-			if not extension.startswith(".") or not folder:
-				messagebox.showerror("Regla inválida", "Cada extensión debe comenzar con punto y tener una carpeta.")
+			extensions = [item.strip().lower() for item in extension_var.get().split(",") if item.strip()]
+			if not extensions or any(not extension.startswith(".") for extension in extensions) or not folder:
+				messagebox.showerror("Regla inválida", "Usa extensiones separadas por comas y una carpeta destino.")
 				return
-			new_rules[extension] = folder
+			if seen_extensions.intersection(extensions):
+				messagebox.showerror("Regla duplicada", "Una extensión no puede aparecer en más de una regla.")
+				return
+			seen_extensions.update(extensions)
+			for extension in extensions:
+				new_rules[extension] = folder
 		config.guardar_reglas(new_rules)
 		config.rules = new_rules
 		self.status_var.set("Reglas guardadas")
@@ -128,11 +186,38 @@ class ClipperApp:
 		if not folder.is_dir():
 			messagebox.showerror("Carpeta inválida", "Selecciona una carpeta existente.")
 			return
+		planned, conflicts = preview_downloads(folder, DEFAULT_DB_PATH)
+		if not planned and not conflicts:
+			messagebox.showinfo("Organización", "No hay archivos para organizar.")
+			return
+		if not self.confirm_plan(planned, conflicts):
+			return
 		moved, errors = organize_downloads(folder, DEFAULT_DB_PATH)
 		self.status_var.set(f"Movidos: {len(moved)} | Errores: {len(errors)}")
 		self.refresh_views()
 		if errors:
 			messagebox.showwarning("Organización completada", f"Se movieron {len(moved)} archivos y hubo {len(errors)} errores.")
+
+	def confirm_plan(self, planned: list[tuple[Path, Path]], conflicts: list[tuple[Path, str, str]]) -> bool:
+		preview = tk.Toplevel(self.root)
+		preview.title("Confirmar organización")
+		preview.transient(self.root)
+		preview.grab_set()
+		result = tk.BooleanVar(value=False)
+		ttk.Label(preview, text=f"Se moverán {len(planned)} archivos. Revisa el destino:").pack(anchor="w", padx=12, pady=12)
+		text = tk.Text(preview, width=90, height=18, state="normal")
+		text.pack(fill="both", expand=True, padx=12)
+		for source, destination in planned:
+			text.insert("end", f"{source.name}  ->  {destination.parent}\n")
+		for source, _, message in conflicts:
+			text.insert("end", f"{source.name}  ->  OMITIDO ({message})\n")
+		text.configure(state="disabled")
+		buttons = ttk.Frame(preview)
+		buttons.pack(anchor="e", padx=12, pady=12)
+		ttk.Button(buttons, text="Cancelar", command=preview.destroy).pack(side="right", padx=(8, 0))
+		ttk.Button(buttons, text="Confirmar", command=lambda: (result.set(True), preview.destroy())).pack(side="right")
+		self.root.wait_window(preview)
+		return result.get()
 
 	def refresh_views(self) -> None:
 		self._fill_tree(self.history_tree, get_history())
@@ -142,7 +227,19 @@ class ClipperApp:
 	def _fill_tree(tree: ttk.Treeview, rows: list[tuple]) -> None:
 		tree.delete(*tree.get_children())
 		for row in rows:
-			tree.insert("", "end", values=row)
+			values = list(row)
+			values[0] = Path(values[0]).name if values[0] else ""
+			values[-1] = ClipperApp.format_date(values[-1])
+			tree.insert("", "end", values=values)
+
+	@staticmethod
+	def format_date(value: str) -> str:
+		from datetime import datetime
+
+		try:
+			return datetime.fromisoformat(value).astimezone().strftime("%d/%m/%Y (%I:%M %p)")
+		except ValueError:
+			return value
 
 
 def run_cli() -> None:

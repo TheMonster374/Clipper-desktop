@@ -68,6 +68,9 @@ La interfaz permite:
 
 - Consultar y cambiar la carpeta que se va a organizar.
 - Editar y guardar las reglas por extensión.
+- Agrupar varias extensiones en una regla, por ejemplo `.jpg, .jpeg, .png`.
+- Añadir o quitar reglas y restaurar las reglas predeterminadas.
+- Revisar los movimientos en una vista previa antes de confirmarlos.
 - Ejecutar la organización sin sobrescribir archivos existentes.
 - Consultar el historial de movimientos y los errores registrados.
 
@@ -117,7 +120,3 @@ La interfaz permite:
 ## Autor
 
 Proyecto personal desarrollado como práctica de programación y automatización.
-
-```
-
-```

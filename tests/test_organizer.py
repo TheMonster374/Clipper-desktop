@@ -61,6 +61,20 @@ class OrganizerTests(unittest.TestCase):
 
             self.assertEqual(config.cargar_reglas(rules_path), new_rules)
 
+    def test_preview_ignores_database_inside_downloads(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloads = Path(temp_dir) / "Descargas"
+            downloads.mkdir()
+            database = downloads / "clipper.db"
+            database.write_text("database", encoding="utf-8")
+            document = downloads / "manual.pdf"
+            document.write_text("pdf", encoding="utf-8")
+
+            planned, errors = organizer.preview_downloads(downloads, str(database))
+
+            self.assertEqual([source for source, _ in planned], [document])
+            self.assertEqual(errors, [])
+
 
 if __name__ == "__main__":
     unittest.main()

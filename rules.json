@@ -1,6 +1,7 @@
 {
-    ".xopp": "Practicas",
-    ".mp4": "Videos",
     ".pdf": "Documentos",
-    ".png": "Imagenes"
+    ".jpeg": "Imagenes",
+    ".jpg": "Imagenes",
+    ".png": "Imagenes",
+    ".mp4": "Videos"
 }

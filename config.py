@@ -4,6 +4,15 @@ from pathlib import Path
 from paths import RULES_PATH
 
 
+DEFAULT_RULES: dict[str, str] = {
+    ".pdf": "Documentos",
+    ".jpg": "Imagenes",
+    ".jpeg": "Imagenes",
+    ".png": "Imagenes",
+    ".mp4": "Videos",
+}
+
+
 def cargar_reglas(path: Path = RULES_PATH) -> dict[str, str]:
     with path.open("r", encoding="utf-8") as archivo:
         return json.load(archivo)
