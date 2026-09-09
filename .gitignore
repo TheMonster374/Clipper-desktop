@@ -6,6 +6,7 @@ __pycache__/
 # Entornos virtuales
 venv/
 .venv/
+.venv-build/
 env/
 
 # VS Code
@@ -31,4 +32,3 @@ build/
 dist/
 
 # PyInstaller
-*.spec

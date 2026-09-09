@@ -5,9 +5,9 @@ import os
 import sys
 from typing import Tuple, List
 
-import config
-from database import DEFAULT_DB_PATH, add_error, add_history
-from paths import downloads_dir, log_path
+from . import config
+from .database import DEFAULT_DB_PATH, add_error, add_history
+from .paths import downloads_dir, log_path
 
 # Logger para registrar errores persistentes
 logger = logging.getLogger("clipper.organizer")

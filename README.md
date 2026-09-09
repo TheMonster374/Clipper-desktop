@@ -1,17 +1,17 @@
 # 📎 Clipper
 
-Clipper es una aplicación de escritorio en Python para organizar archivos de la carpeta Descargas usando reglas por extensión. Detecta la ubicación configurada en Windows, Linux y macOS.
+Clipper es una aplicación de escritorio en Python para organizar archivos de la carpeta Descargas usando reglas por extensión. Los sistemas objetivo de esta versión son Linux Mint y Windows.
 
 ## Cómo funciona
 
 El flujo actual está dividido en varios módulos:
 
-- [main.py](main.py): interfaz gráfica y modo de terminal.
-- [organizer.py](organizer.py): vista previa y lógica para decidir destinos y mover archivos.
-- [config.py](config.py): carga, guarda y define las reglas predeterminadas.
-- [rules.json](rules.json): reglas configurables por extensión.
-- [database.py](database.py): historial de movimientos y registro de errores en SQLite.
-- [paths.py](paths.py): rutas multiplataforma para Descargas, datos y logs.
+- [src/clipper/main.py](src/clipper/main.py): interfaz gráfica y modo de terminal.
+- [src/clipper/organizer.py](src/clipper/organizer.py): vista previa y lógica para decidir destinos y mover archivos.
+- [src/clipper/config.py](src/clipper/config.py): carga, guarda y define las reglas predeterminadas.
+- [resources/rules.json](resources/rules.json): reglas configurables por extensión.
+- [src/clipper/database.py](src/clipper/database.py): historial de movimientos y registro de errores en SQLite.
+- [src/clipper/paths.py](src/clipper/paths.py): rutas multiplataforma para Descargas, datos y logs.
 - [tests/test_organizer.py](tests/test_organizer.py): pruebas automatizadas.
 
 ## Reglas predeterminadas
@@ -27,11 +27,10 @@ Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 
 ## Estructura del proyecto
 
-- `main.py`: ejecuta la interfaz o el modo CLI.
-- `organizer.py`: contiene `preview_downloads()` y `organize_downloads()`.
-- `config.py` y `rules.json`: almacenan y gestionan las reglas.
-- `database.py`: gestiona la base de datos SQLite.
-- `paths.py`: resuelve las rutas según el sistema operativo.
+- `src/clipper/`: paquete de la aplicación.
+- `resources/`: reglas y otros recursos externos.
+- `packaging/`: configuración de PyInstaller.
+- `scripts/`: scripts de construcción para Linux Mint y Windows.
 - `tests/`: contiene las pruebas automatizadas.
 
 ## Cómo ejecutar
@@ -39,7 +38,7 @@ Los archivos que no coinciden con ninguna regla se mueven a `Otros`.
 Desde la carpeta del proyecto:
 
 ```bash
-python3 main.py
+PYTHONPATH=src python3 -m clipper
 ```
 
 Antes de ejecutar, instala la dependencia multiplataforma:
@@ -57,7 +56,7 @@ sudo apt install python3-tk
 La aplicación abre una interfaz de escritorio. Para usar la versión de terminal:
 
 ```bash
-python3 main.py --cli
+PYTHONPATH=src python3 -m clipper --cli
 ```
 
 ## Qué hace el programa
@@ -106,19 +105,70 @@ Los errores guardados antes de esta versión pueden conservar el mensaje origina
 
 ## Compatibilidad
 
-Clipper funciona en Windows, Linux y macOS siempre que Python y Tkinter estén instalados. En Windows puedes ejecutarlo con:
+Los sistemas objetivo de esta versión son Linux Mint y Windows. macOS y otras distribuciones de Linux no forman parte de las pruebas oficiales actuales.
+
+Para ejecutar desde el código fuente en Windows:
 
 ```bash
-py main.py
+py -m pip install -r requirements.txt
+py -m clipper
 ```
 
-En Linux y macOS normalmente se ejecuta con:
+En Linux Mint:
 
 ```bash
-python3 main.py
+sudo apt install python3-tk python3-venv
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+PYTHONPATH=src .venv/bin/python -m clipper
+```
+
+También puedes usar el Python del sistema si tu distribución permite instalar paquetes con `pip`:
+
+```bash
+python3 -m pip install -r requirements.txt
+PYTHONPATH=src python3 -m clipper
 ```
 
 El comportamiento de archivos abiertos depende del sistema operativo. Windows suele impedir mover archivos que otra aplicación está utilizando. Linux puede permitirlo, por lo que Clipper muestra una advertencia y realiza una detección preventiva adicional.
+
+## Crear ejecutables
+
+Los ejecutables deben generarse en el mismo sistema operativo donde se van a utilizar. PyInstaller no crea un ejecutable de Windows desde Linux. Los scripts de construcción crean automáticamente un entorno virtual `.venv-build` y allí instalan PyInstaller y las dependencias.
+
+En Linux Mint:
+
+```bash
+chmod +x scripts/build_linux.sh
+./scripts/build_linux.sh
+```
+
+Ejecuta esos comandos desde la carpeta `scripts/` o usa `./scripts/build_linux.sh` desde la raíz. El resultado se copiará fuera del repositorio, en `~/Aplicaciones/Clipper/Linux/Clipper/Clipper`.
+
+Para Windows 10 u 11, abre PowerShell en el proyecto y ejecuta:
+
+```powershell
+.\scripts\build_windows.ps1
+```
+
+El resultado se copiará fuera del repositorio, en `%USERPROFILE%\Aplicaciones\Clipper\Windows\Clipper\Clipper.exe`. La carpeta `Clipper` completa debe distribuirse, porque contiene el ejecutable y los archivos internos, incluido `rules.json`.
+
+Quien recibe la carpeta generada no necesita instalar Python, Tkinter ni las dependencias: PyInstaller las incluye en el paquete. `rules.json` queda dentro del paquete para que las reglas puedan seguir editándose.
+
+Windows 10 y Windows 11 son objetivos separados de validación. La aplicación no usa APIs específicas de una de esas versiones, pero hay que probar el ejecutable en ambas.
+
+## Instalar desde GitHub
+
+La forma recomendada para usuarios finales es descargar una release, no clonar el repositorio ni instalar Python.
+
+1. En GitHub, entra en **Releases**.
+2. Descarga `Clipper-Linux-x86_64.zip` para Linux Mint o `Clipper-Windows-x86_64.zip` para Windows.
+3. Descomprime el archivo.
+4. Abre el ejecutable dentro de la carpeta `Clipper`.
+
+En Linux Mint, si el explorador no permite abrirlo, activa **Permitir ejecutar el archivo como programa** en sus propiedades. En Windows puede aparecer una advertencia de SmartScreen porque el ejecutable todavía no tiene firma digital.
+
+Las releases se generan automáticamente al crear un tag con formato `vX.Y.Z`, por ejemplo `v1.0.0`. El workflow de GitHub Actions construye un paquete distinto para cada sistema operativo.
 
 ## Tecnologías
 
@@ -142,7 +192,7 @@ python3 -W error -m unittest discover -s tests -v
 - Mejorar el diseño visual de la interfaz.
 - Permitir exportar el historial.
 - Añadir configuración de ejecución automática o programación.
-- Preparar paquetes instalables para Windows, Linux y macOS.
+- Crear una interfaz de instalación con accesos directos.
 
 ## Autor
 

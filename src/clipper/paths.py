@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 try:
@@ -28,14 +29,19 @@ except ImportError:
         return str(Path(base) / app_name)
 
     def sys_platform() -> str:
-        import sys
-
         return sys.platform
 
 
 APP_NAME = "Clipper"
-PROJECT_DIR = Path(__file__).resolve().parent
-RULES_PATH = PROJECT_DIR / "rules.json"
+if getattr(sys, "frozen", False):
+    PROJECT_DIR = Path(sys.executable).resolve().parent
+    BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", PROJECT_DIR))
+    RULES_PATH = PROJECT_DIR / "rules.json"
+    if not RULES_PATH.exists():
+        RULES_PATH = BUNDLE_DIR / "rules.json"
+else:
+    PROJECT_DIR = Path(__file__).resolve().parents[2]
+    RULES_PATH = PROJECT_DIR / "resources" / "rules.json"
 
 
 def downloads_dir() -> Path:

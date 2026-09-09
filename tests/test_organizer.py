@@ -1,11 +1,14 @@
 import tempfile
 import unittest
 from pathlib import Path
+import sys
 
-import config
-from database import add_error, add_history, get_errors, get_history
-from main import ClipperApp
-import organizer
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from clipper import config
+from clipper import organizer
+from clipper.database import add_error, add_history, get_errors, get_history
+from clipper.main import ClipperApp
 
 
 class OrganizerTests(unittest.TestCase):

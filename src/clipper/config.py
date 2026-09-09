@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from paths import RULES_PATH
+from .paths import RULES_PATH
 
 
 DEFAULT_RULES: dict[str, str] = {

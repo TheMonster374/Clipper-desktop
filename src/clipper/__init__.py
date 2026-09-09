@@ -1,0 +1,1 @@
+"""Clipper, organizador de archivos para Linux Mint y Windows."""

@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
 
-from paths import database_path
+from .paths import database_path
 
 
 DEFAULT_DB_PATH = str(database_path())

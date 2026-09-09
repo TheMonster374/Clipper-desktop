@@ -12,10 +12,10 @@ except ModuleNotFoundError:
 	messagebox = None
 	ttk = None
 
-import config
-from database import DEFAULT_DB_PATH, create_tables, get_errors, get_history
-from organizer import friendly_error, organize_downloads, preview_downloads
-from paths import downloads_dir
+from . import config
+from .database import DEFAULT_DB_PATH, create_tables, get_errors, get_history
+from .organizer import friendly_error, organize_downloads, preview_downloads
+from .paths import downloads_dir
 
 
 class ClipperApp:

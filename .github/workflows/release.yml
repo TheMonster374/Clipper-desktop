@@ -1,0 +1,97 @@
+name: Build Clipper releases
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Tkinter y dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk
+          python -m pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Construir paquete Linux
+        run: |
+          python -m PyInstaller --noconfirm --clean \
+            --distpath release/linux \
+            --workpath build/linux \
+            packaging/clipper.spec
+
+      - name: Comprimir paquete Linux
+        run: |
+          cd release/linux
+          zip -r ../../Clipper-Linux-x86_64.zip Clipper
+
+      - name: Publicar artefacto Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clipper-Linux-x86_64
+          path: Clipper-Linux-x86_64.zip
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Construir paquete Windows
+        run: |
+          python -m PyInstaller --noconfirm --clean `
+            --distpath release/windows `
+            --workpath build/windows `
+            packaging/clipper.spec
+
+      - name: Comprimir paquete Windows
+        run: Compress-Archive -Path release/windows/Clipper -DestinationPath Clipper-Windows-x86_64.zip
+
+      - name: Publicar artefacto Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clipper-Windows-x86_64
+          path: Clipper-Windows-x86_64.zip
+
+  publish-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar paquete Linux
+        uses: actions/download-artifact@v4
+        with:
+          name: Clipper-Linux-x86_64
+
+      - name: Descargar paquete Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: Clipper-Windows-x86_64
+
+      - name: Publicar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Clipper-Linux-x86_64.zip
+            Clipper-Windows-x86_64.zip
+          generate_release_notes: true
