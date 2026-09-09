@@ -3,5 +3,6 @@
     ".jpeg": "Imagenes",
     ".jpg": "Imagenes",
     ".png": "Imagenes",
-    ".mp4": "Videos"
+    ".mp4": "Videos",
+    ".txt": "Texto"
 }

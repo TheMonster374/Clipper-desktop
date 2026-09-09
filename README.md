@@ -77,14 +77,18 @@ La interfaz permite:
 - Consultar y cambiar la carpeta que se va a organizar.
 - Editar y guardar las reglas por extensión.
 - Agrupar varias extensiones en una regla, por ejemplo `.jpg, .jpeg, .png`.
+- Separar las extensiones con comas; `.pdf .docx` no es válido.
 - Añadir o quitar reglas y restaurar las reglas predeterminadas.
 - Revisar los movimientos en una vista previa antes de confirmarlos.
 - Ejecutar la organización sin sobrescribir archivos existentes.
 - Consultar el historial de movimientos y los errores registrados.
+- Buscar en el historial y filtrar los errores por tipo.
+- Mostrar mensajes de error en español para los problemas comunes del sistema.
+- Mostrar una advertencia para cerrar archivos abiertos antes de organizar.
 
 ## Estado actual
 
-### V0.9
+### V1.0
 
 - Organización por extensión con carpeta `Otros` para archivos sin regla.
 - Detección multiplataforma de la carpeta Descargas.
@@ -92,7 +96,29 @@ La interfaz permite:
 - Reglas editables, agrupación de extensiones y restauración de valores predeterminados.
 - Vista previa y confirmación antes de mover archivos.
 - Historial y errores persistentes en SQLite.
+- Búsqueda en historial y filtros de errores.
+- Mensajes de error comunes traducidos al español.
+- Advertencia antes de organizar para cerrar archivos abiertos.
+- Detección preventiva de archivos abiertos en Linux como protección adicional.
 - Pruebas automatizadas para la lógica principal.
+
+Los errores guardados antes de esta versión pueden conservar el mensaje original del sistema. Los errores nuevos se registran con mensajes descriptivos en español.
+
+## Compatibilidad
+
+Clipper funciona en Windows, Linux y macOS siempre que Python y Tkinter estén instalados. En Windows puedes ejecutarlo con:
+
+```bash
+py main.py
+```
+
+En Linux y macOS normalmente se ejecuta con:
+
+```bash
+python3 main.py
+```
+
+El comportamiento de archivos abiertos depende del sistema operativo. Windows suele impedir mover archivos que otra aplicación está utilizando. Linux puede permitirlo, por lo que Clipper muestra una advertencia y realiza una detección preventiva adicional.
 
 ## Tecnologías
 
@@ -114,7 +140,6 @@ python3 -W error -m unittest discover -s tests -v
 ## Próximos pasos
 
 - Mejorar el diseño visual de la interfaz.
-- Añadir búsqueda y filtros al historial.
 - Permitir exportar el historial.
 - Añadir configuración de ejecución automática o programación.
 - Preparar paquetes instalables para Windows, Linux y macOS.

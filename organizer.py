@@ -1,6 +1,8 @@
 from pathlib import Path
 import shutil
 import logging
+import os
+import sys
 from typing import Tuple, List
 
 import config
@@ -19,6 +21,53 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
+def friendly_error(error: Exception, action: str) -> str:
+    """Convierte errores comunes del sistema en mensajes comprensibles."""
+    if isinstance(error, PermissionError):
+        return f"{action}: no hay permisos suficientes o el archivo está en uso."
+    if isinstance(error, FileNotFoundError):
+        return f"{action}: no se encontró el archivo o la carpeta."
+    if isinstance(error, IsADirectoryError):
+        return f"{action}: la ruta apunta a una carpeta y no a un archivo."
+    if isinstance(error, OSError):
+        return f"{action}: el sistema no pudo completar la operación."
+    return f"{action}: ocurrió un error inesperado."
+
+
+def is_lock_file(file: Path) -> bool:
+    """Identifica archivos temporales de bloqueo creados por editores."""
+    return file.name.startswith(".~lock.") and file.name.endswith("#")
+
+
+def open_files(proc_root: Path = Path("/proc")) -> set[Path]:
+    """Devuelve los archivos abiertos detectables por Linux."""
+    opened: set[Path] = set()
+    if sys.platform != "linux":
+        return opened
+
+    try:
+        for process_dir in proc_root.iterdir():
+            if not process_dir.name.isdigit():
+                continue
+            descriptors = process_dir / "fd"
+            try:
+                for descriptor in descriptors.iterdir():
+                    try:
+                        opened.add(Path(os.readlink(descriptor)).resolve())
+                    except (FileNotFoundError, PermissionError, OSError):
+                        continue
+            except (FileNotFoundError, PermissionError, OSError):
+                continue
+    except (FileNotFoundError, PermissionError, OSError):
+        return opened
+    return opened
+
+
+def is_open_file(file: Path, proc_root: Path = Path("/proc")) -> bool:
+    """Comprueba en Linux si algún proceso mantiene abierto el archivo."""
+    return file.resolve() in open_files(proc_root)
+
+
 def preview_downloads(
     downloads: Path,
     db_path: str = DEFAULT_DB_PATH,
@@ -29,16 +78,19 @@ def preview_downloads(
     try:
         entries = list(downloads.iterdir())
     except OSError as error:
-        return [], [(downloads, type(error).__name__, str(error))]
+        return [], [(downloads, type(error).__name__, friendly_error(error, "No se pudo leer la carpeta"))]
 
+    opened_files = open_files()
     for file in entries:
-        if not file.is_file() or file.resolve() == Path(db_path).resolve():
+        if not file.is_file() or is_lock_file(file) or file.resolve() == Path(db_path).resolve():
             continue
         extension = file.suffix.lower()
         folder = downloads / config.rules.get(extension, "Otros")
         destination = folder / file.name
-        if destination.exists():
-            errors.append((file, "DestinationExists", f"Destino ya existe: {destination}"))
+        if file.resolve() in opened_files:
+            errors.append((file, "FileInUse", "El archivo está abierto por otro programa."))
+        elif destination.exists():
+            errors.append((file, "DestinationExists", f"El destino ya existe: {destination}"))
         else:
             planned.append((file, destination))
     return planned, errors
@@ -65,18 +117,25 @@ def organize_downloads(
     try:
         entries = list(downloads.iterdir())
     except Exception as e:
-        msg = f"No se puede listar la carpeta {downloads}: {e}"
+        msg = friendly_error(e, f"No se puede listar la carpeta {downloads}")
         logger.error(msg)
-        errors.append((downloads, type(e).__name__, str(e)))
-        add_error(str(downloads), type(e).__name__, str(e), db_path)
+        errors.append((downloads, type(e).__name__, msg))
+        add_error(str(downloads), type(e).__name__, msg, db_path)
         return moved_files, errors
 
+    opened_files = open_files()
     for file in entries:
         try:
-            if not file.is_file():
+            if not file.is_file() or is_lock_file(file):
                 continue
 
             if file.resolve() == Path(db_path).resolve():
+                continue
+
+            if file.resolve() in opened_files:
+                msg = "El archivo está abierto por otro programa."
+                errors.append((file, "FileInUse", msg))
+                add_error(str(file), "FileInUse", msg, db_path)
                 continue
 
             ext = file.suffix.lower()
@@ -90,10 +149,10 @@ def organize_downloads(
             try:
                 folder.mkdir(parents=True, exist_ok=True)
             except Exception as e:
-                msg = f"No se pudo crear la carpeta destino {folder}: {e}"
+                msg = friendly_error(e, f"No se pudo crear la carpeta destino {folder}")
                 logger.warning("%s - %s", file, msg)
-                errors.append((file, type(e).__name__, str(e)))
-                add_error(str(file), type(e).__name__, str(e), db_path)
+                errors.append((file, type(e).__name__, msg))
+                add_error(str(file), type(e).__name__, msg, db_path)
                 continue
 
             destination = folder / file.name
@@ -111,23 +170,24 @@ def organize_downloads(
                 moved_files.append((file, destination))
                 add_history(str(file), str(file.parent), str(destination.parent), db_path)
             except PermissionError as e:
-                msg = f"Sin permisos o archivo en uso: {e}"
+                msg = friendly_error(e, "No se pudo mover el archivo")
                 logger.warning("%s - %s", file, msg)
-                errors.append((file, "PermissionError", str(e)))
-                add_error(str(file), "PermissionError", str(e), db_path)
+                errors.append((file, "PermissionError", msg))
+                add_error(str(file), "PermissionError", msg, db_path)
                 continue
             except (OSError, shutil.Error) as e:
-                msg = f"Error al mover: {e}"
+                msg = friendly_error(e, "No se pudo mover el archivo")
                 logger.warning("%s - %s", file, msg)
-                errors.append((file, type(e).__name__, str(e)))
-                add_error(str(file), type(e).__name__, str(e), db_path)
+                errors.append((file, type(e).__name__, msg))
+                add_error(str(file), type(e).__name__, msg, db_path)
                 continue
 
         except Exception as e:
             # Capturamos errores inesperados por archivo y continuamos
             logger.exception("Error inesperado procesando %s: %s", file, e)
-            errors.append((file, type(e).__name__, str(e)))
-            add_error(str(file), type(e).__name__, str(e), db_path)
+            msg = friendly_error(e, "No se pudo procesar el archivo")
+            errors.append((file, type(e).__name__, msg))
+            add_error(str(file), type(e).__name__, msg, db_path)
 
     return moved_files, errors
 

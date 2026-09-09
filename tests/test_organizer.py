@@ -4,6 +4,7 @@ from pathlib import Path
 
 import config
 from database import add_error, add_history, get_errors, get_history
+from main import ClipperApp
 import organizer
 
 
@@ -74,6 +75,68 @@ class OrganizerTests(unittest.TestCase):
 
             self.assertEqual([source for source, _ in planned], [document])
             self.assertEqual(errors, [])
+
+    def test_filters_history_rows_case_insensitively(self) -> None:
+        rows = [
+            ("foto.png", "/tmp/Descargas", "/tmp/Imagenes", "fecha"),
+            ("manual.pdf", "/tmp/Descargas", "/tmp/Documentos", "fecha"),
+        ]
+
+        filtered = ClipperApp.filter_rows(rows, "FOTO")
+
+        self.assertEqual(filtered, [rows[0]])
+
+    def test_file_filter_does_not_search_paths(self) -> None:
+        rows = [("foto.png", "/tmp/Imagenes", "/tmp/Imagenes", "fecha")]
+
+        filtered = ClipperApp.filter_rows(rows, "imagenes")
+
+        self.assertEqual(filtered, [])
+
+    def test_formats_iso_date_for_the_interface(self) -> None:
+        formatted = ClipperApp.format_date("2026-09-09T17:05:00+00:00")
+
+        self.assertRegex(formatted, r"09/09/2026 \(\d{2}:05 (AM|PM)\)")
+
+    def test_translates_permission_errors(self) -> None:
+        message = organizer.friendly_error(
+            PermissionError(13, "Permission denied"),
+            "No se pudo mover el archivo",
+        )
+
+        self.assertIn("no hay permisos", message)
+        self.assertNotIn("Permission denied", message)
+
+    def test_preview_uses_spanish_destination_conflict_message(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloads = Path(temp_dir) / "Descargas"
+            documents = downloads / "Documentos"
+            documents.mkdir(parents=True)
+            source = downloads / "manual.pdf"
+            destination = documents / source.name
+            source.write_text("nuevo", encoding="utf-8")
+            destination.write_text("original", encoding="utf-8")
+
+            _, errors = organizer.preview_downloads(downloads, str(Path(temp_dir) / "clipper.db"))
+
+            self.assertEqual(errors[0][2], f"El destino ya existe: {destination}")
+
+    def test_ignores_editor_lock_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloads = Path(temp_dir) / "Descargas"
+            downloads.mkdir()
+            lock_file = downloads / ".~lock.documento.pdf#"
+            lock_file.write_text("lock", encoding="utf-8")
+
+            planned, errors = organizer.preview_downloads(downloads, str(Path(temp_dir) / "clipper.db"))
+
+            self.assertEqual(planned, [])
+            self.assertEqual(errors, [])
+
+    def test_detects_a_file_opened_by_this_process_on_linux(self) -> None:
+        with tempfile.NamedTemporaryFile() as opened_file:
+            if organizer.sys.platform == "linux":
+                self.assertTrue(organizer.is_open_file(Path(opened_file.name)))
 
 
 if __name__ == "__main__":

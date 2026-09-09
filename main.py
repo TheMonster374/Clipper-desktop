@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 
 import config
 from database import DEFAULT_DB_PATH, create_tables, get_errors, get_history
-from organizer import organize_downloads, preview_downloads
+from organizer import friendly_error, organize_downloads, preview_downloads
 from paths import downloads_dir
 
 
@@ -131,30 +131,68 @@ class ClipperApp:
 		self.save_rules()
 
 	def _build_history_tab(self) -> None:
+		filter_bar = ttk.Frame(self.history_frame)
+		filter_bar.pack(fill="x", pady=(0, 8))
+		self.history_filter_var = tk.StringVar()
+		ttk.Label(filter_bar, text="Nombre de archivo:").pack(side="left")
+		ttk.Entry(filter_bar, textvariable=self.history_filter_var).pack(side="left", fill="x", expand=True, padx=8)
+		ttk.Button(filter_bar, text="Filtrar", command=self.refresh_views).pack(side="left")
+		ttk.Button(filter_bar, text="Limpiar", command=lambda: self.clear_filter(self.history_filter_var)).pack(side="left", padx=(6, 0))
 		self.history_tree = self._build_tree(
 			self.history_frame,
 			("archivo", "origen", "destino", "fecha"),
 		)
-		ttk.Button(self.history_frame, text="Actualizar", command=self.refresh_views).pack(
-			anchor="e", pady=(8, 0)
-		)
+		ttk.Button(self.history_frame, text="Actualizar", command=self.refresh_views).pack(anchor="e", pady=(8, 0))
 
 	def _build_errors_tab(self) -> None:
+		filter_bar = ttk.Frame(self.errors_frame)
+		filter_bar.pack(fill="x", pady=(0, 8))
+		self.errors_filter_var = tk.StringVar()
+		self.error_type_var = tk.StringVar(value="Todos")
+		ttk.Label(filter_bar, text="Nombre de archivo:").pack(side="left")
+		ttk.Entry(filter_bar, textvariable=self.errors_filter_var).pack(side="left", fill="x", expand=True, padx=8)
+		ttk.Label(filter_bar, text="Tipo:").pack(side="left")
+		self.error_type_combo = ttk.Combobox(
+			filter_bar,
+			textvariable=self.error_type_var,
+			values=("Todos",),
+			state="readonly",
+			width=20,
+		)
+		self.error_type_combo.pack(side="left", padx=8)
+		self.error_type_combo.bind("<<ComboboxSelected>>", lambda _event: self.refresh_views())
+		ttk.Button(filter_bar, text="Filtrar", command=self.refresh_views).pack(side="left")
+		ttk.Button(filter_bar, text="Limpiar", command=self.clear_error_filters).pack(side="left", padx=(6, 0))
 		self.errors_tree = self._build_tree(
 			self.errors_frame,
 			("archivo", "tipo", "mensaje", "fecha"),
 		)
-		ttk.Button(self.errors_frame, text="Actualizar", command=self.refresh_views).pack(
-			anchor="e", pady=(8, 0)
-		)
+		ttk.Button(self.errors_frame, text="Actualizar", command=self.refresh_views).pack(anchor="e", pady=(8, 0))
 
 	@staticmethod
 	def _build_tree(parent: ttk.Frame, columns: tuple[str, ...]) -> ttk.Treeview:
-		tree = ttk.Treeview(parent, columns=columns, show="headings")
+		tree_frame = ttk.Frame(parent)
+		tree_frame.pack(fill="both", expand=True)
+		tree = ttk.Treeview(tree_frame, columns=columns, show="headings")
+		vertical_scroll = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+		horizontal_scroll = ttk.Scrollbar(tree_frame, orient="horizontal", command=tree.xview)
+		tree.configure(yscrollcommand=vertical_scroll.set, xscrollcommand=horizontal_scroll.set)
 		for column in columns:
 			tree.heading(column, text=column.capitalize())
-			tree.column(column, width=180, anchor="w")
-		tree.pack(fill="both", expand=True)
+			width = {
+				"archivo": 180,
+				"origen": 280,
+				"destino": 280,
+				"tipo": 150,
+				"mensaje": 360,
+				"fecha": 165,
+			}.get(column, 180)
+			tree.column(column, width=width, minwidth=90, anchor="w", stretch=False)
+		tree.grid(row=0, column=0, sticky="nsew")
+		vertical_scroll.grid(row=0, column=1, sticky="ns")
+		horizontal_scroll.grid(row=1, column=0, sticky="ew")
+		tree_frame.rowconfigure(0, weight=1)
+		tree_frame.columnconfigure(0, weight=1)
 		return tree
 
 	def choose_folder(self) -> None:
@@ -168,10 +206,14 @@ class ClipperApp:
 		for extension_var, folder_var in self.rule_rows:
 			folder = folder_var.get().strip()
 			extensions = [item.strip().lower() for item in extension_var.get().split(",") if item.strip()]
-			if not extensions or any(not extension.startswith(".") for extension in extensions) or not folder:
-				messagebox.showerror("Regla inválida", "Usa extensiones separadas por comas y una carpeta destino.")
+			if (
+				not extensions
+				or any(not extension.startswith(".") or any(char.isspace() for char in extension) for extension in extensions)
+				or not folder
+			):
+				messagebox.showerror("Regla inválida", "Separa las extensiones con comas: .pdf, .docx")
 				return
-			if seen_extensions.intersection(extensions):
+			if len(extensions) != len(set(extensions)) or seen_extensions.intersection(extensions):
 				messagebox.showerror("Regla duplicada", "Una extensión no puede aparecer en más de una regla.")
 				return
 			seen_extensions.update(extensions)
@@ -185,6 +227,11 @@ class ClipperApp:
 		folder = Path(self.folder_var.get())
 		if not folder.is_dir():
 			messagebox.showerror("Carpeta inválida", "Selecciona una carpeta existente.")
+			return
+		if not messagebox.askyesno(
+			"Archivos abiertos",
+			"Cierra todos los archivos abiertos dentro de la carpeta que vas a organizar.\n\n¿Quieres continuar?",
+		):
 			return
 		planned, conflicts = preview_downloads(folder, DEFAULT_DB_PATH)
 		if not planned and not conflicts:
@@ -220,8 +267,33 @@ class ClipperApp:
 		return result.get()
 
 	def refresh_views(self) -> None:
-		self._fill_tree(self.history_tree, get_history())
-		self._fill_tree(self.errors_tree, get_errors())
+		history_rows = get_history()
+		error_rows = get_errors()
+		history_query = self.history_filter_var.get().strip().lower()
+		error_query = self.errors_filter_var.get().strip().lower()
+		error_type = self.error_type_var.get()
+		self._fill_tree(self.history_tree, self.filter_rows(history_rows, history_query))
+		filtered_errors = self.filter_rows(error_rows, error_query)
+		if error_type != "Todos":
+			filtered_errors = [row for row in filtered_errors if row[1] == error_type]
+		self._fill_tree(self.errors_tree, filtered_errors)
+		self.error_type_combo.configure(values=("Todos", *sorted({row[1] for row in error_rows})))
+
+	def clear_filter(self, variable: tk.StringVar) -> None:
+		variable.set("")
+		self.refresh_views()
+
+	def clear_error_filters(self) -> None:
+		self.errors_filter_var.set("")
+		self.error_type_var.set("Todos")
+		self.refresh_views()
+
+	@staticmethod
+	def filter_rows(rows: list[tuple], query: str) -> list[tuple]:
+		query = query.strip().lower()
+		if not query:
+			return rows
+		return [row for row in rows if query in str(row[0]).lower()]
 
 	@staticmethod
 	def _fill_tree(tree: ttk.Treeview, rows: list[tuple]) -> None:
@@ -229,8 +301,22 @@ class ClipperApp:
 		for row in rows:
 			values = list(row)
 			values[0] = Path(values[0]).name if values[0] else ""
+			if len(values) == 4 and values[1] in {"PermissionError", "FileNotFoundError", "IsADirectoryError", "OSError"}:
+				values[2] = ClipperApp.localized_error(values[1], values[2])
 			values[-1] = ClipperApp.format_date(values[-1])
 			tree.insert("", "end", values=values)
+
+	@staticmethod
+	def localized_error(error_type: str, message: str) -> str:
+		if error_type == "PermissionError":
+			return friendly_error(PermissionError(), "No se pudo completar la operación")
+		if error_type == "FileNotFoundError":
+			return friendly_error(FileNotFoundError(), "No se pudo completar la operación")
+		if error_type == "IsADirectoryError":
+			return friendly_error(IsADirectoryError(), "No se pudo completar la operación")
+		if error_type == "OSError" and "Permission denied" in message:
+			return friendly_error(PermissionError(), "No se pudo completar la operación")
+		return message
 
 	@staticmethod
 	def format_date(value: str) -> str:
