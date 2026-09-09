@@ -84,7 +84,7 @@ La interfaz permite:
 
 ## Estado actual
 
-### V0.1
+### V0.9
 
 - Organización por extensión con carpeta `Otros` para archivos sin regla.
 - Detección multiplataforma de la carpeta Descargas.
