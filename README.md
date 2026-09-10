@@ -102,7 +102,7 @@ python3 -W error -m unittest discover -s tests -v
 - Añadir configuración de ejecución automática o programación.
 - Crear una interfaz de instalación con accesos directos.
 
-`👤 Autor`
+## `👤 Autor`
 <a href="https://github.com/TheMonster374"><img src="https://github.com/TheMonster374.png" width="250" height="250" alt="Monster"/></a>
 
 `Clipper-desktop by MONSTER`
