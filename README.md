@@ -4,7 +4,7 @@ Clipper es una aplicación de escritorio en Python para organizar archivos de la
 
 > **Estado del proyecto:** esta es una **versión beta inicial**. La aplicación ya es funcional, pero todavía puede contener errores, ajustes pendientes y cambios en el comportamiento.
 
-## `👁️​ Vista previa`
+<h2 align="center"> 👁️​ Vista previa </h2>
 
 <p align="center">
 <img src="https://www.image2url.com/r2/default/images/1789061775463-3ef6fb85-15c8-4537-8681-46d43bda6f5a.png" alt="Clipper_Vista_Previa" width="500"/>
@@ -12,11 +12,11 @@ Clipper es una aplicación de escritorio en Python para organizar archivos de la
 <p align="center">
 <img src="https://www.image2url.com/r2/default/images/1789061779843-4a281f1a-d2c0-4fff-9788-a0c97fdc3c71.png" alt="Clipper_Vista_Previa" width="500"/>
 
-### `📃 Historial`
+<h3 align="center"> 📃 Historial </h3>
 <p align="center">
 <img src="https://www.image2url.com/r2/default/images/1789061770660-f4b26c29-2bd3-4f87-908e-6ccf5623b661.png" alt="Clipper_Vista_Previa_Historial" width="500"/>
 
-### `❌ Historial Errores`
+<h3 align="center"> ❌ Historial Errores </h3>
 <p align="center">
 <img src="https://www.image2url.com/r2/default/images/1789061779843-4a281f1a-d2c0-4fff-9788-a0c97fdc3c71.png" alt="Clipper_Vista_Previa_Errores" width="500"/>
 
@@ -45,7 +45,7 @@ Clipper organiza automáticamente los archivos de la carpeta Descargas según su
 
 La forma recomendada de usar Clipper es descargar una release.
 
-1. En GitHub, entra en **Releases**.
+1. En GitHub, entra en **[Releases](https://github.com/TheMonster374/Clipper-desktop/releases/tag/v1.0.1)**.
 2. Descarga el paquete correspondiente a tu sistema operativo.
 3. Descomprime el archivo.
 4. Abre el ejecutable dentro de la carpeta `Clipper`.
@@ -102,7 +102,7 @@ python3 -W error -m unittest discover -s tests -v
 - Añadir configuración de ejecución automática o programación.
 - Crear una interfaz de instalación con accesos directos.
 
-## `👤 Autor`
+`👤 Autor`
 <a href="https://github.com/TheMonster374"><img src="https://github.com/TheMonster374.png" width="250" height="250" alt="Monster"/></a>
 
 `Clipper-desktop by MONSTER`
