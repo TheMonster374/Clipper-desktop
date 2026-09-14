@@ -111,6 +111,22 @@ class ClipperApp:
 			row=button_row, column=2, sticky="e", pady=(12, 0)
 		)
 
+	@staticmethod
+	def _rule_validation_error(extension_text: str, folder_text: str) -> str | None:
+		folder = folder_text.strip()
+		extensions = [item.strip().lower() for item in extension_text.split(",") if item.strip()]
+		if not folder and not extensions:
+			return "Indica la extensión y el nombre de la carpeta destino."
+		if not folder:
+			return "Indica el nombre de la carpeta destino."
+		if not extensions:
+			return "Indica al menos una extensión con formato ej: .pdf, .docx."
+		if any(not extension.startswith(".") for extension in extensions):
+			return "Cada extensión debe comenzar con un punto ej: .pdf, .docx"
+		if any(any(char.isspace() for char in extension) for extension in extensions):
+			return "Las extensiones no deben contener espacios: .pdf, .docx"
+		return None
+
 	def remove_rule(self, index: int) -> None:
 		if len(self.rule_rows) == 1:
 			messagebox.showwarning("Reglas", "Debe quedar al menos una regla.")
@@ -204,15 +220,12 @@ class ClipperApp:
 		new_rules: dict[str, str] = {}
 		seen_extensions: set[str] = set()
 		for extension_var, folder_var in self.rule_rows:
+			error_message = self._rule_validation_error(extension_var.get(), folder_var.get())
+			if error_message:
+				messagebox.showerror("Regla inválida", error_message)
+				return
 			folder = folder_var.get().strip()
 			extensions = [item.strip().lower() for item in extension_var.get().split(",") if item.strip()]
-			if (
-				not extensions
-				or any(not extension.startswith(".") or any(char.isspace() for char in extension) for extension in extensions)
-				or not folder
-			):
-				messagebox.showerror("Regla inválida", "Separa las extensiones con comas: .pdf, .docx")
-				return
 			if len(extensions) != len(set(extensions)) or seen_extensions.intersection(extensions):
 				messagebox.showerror("Regla duplicada", "Una extensión no puede aparecer en más de una regla.")
 				return

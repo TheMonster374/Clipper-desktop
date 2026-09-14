@@ -96,6 +96,21 @@ class OrganizerTests(unittest.TestCase):
 
         self.assertEqual(filtered, [])
 
+    def test_rule_validation_reports_missing_folder(self) -> None:
+        message = ClipperApp._rule_validation_error(".pdf", "")
+
+        self.assertEqual(message, "Indica el nombre de la carpeta destino.")
+
+    def test_rule_validation_reports_missing_extension_dot(self) -> None:
+        message = ClipperApp._rule_validation_error("pdf", "Documentos")
+
+        self.assertEqual(message, "Cada extensión debe comenzar con un punto ej: .pdf, .docx")
+
+    def test_rule_validation_reports_missing_extension_and_folder(self) -> None:
+        message = ClipperApp._rule_validation_error("", "")
+
+        self.assertEqual(message, "Indica la extensión y el nombre de la carpeta destino.")
+
     def test_formats_iso_date_for_the_interface(self) -> None:
         formatted = ClipperApp.format_date("2026-09-09T17:05:00+00:00")
 

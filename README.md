@@ -45,7 +45,7 @@ Clipper organiza automáticamente los archivos de la carpeta Descargas según su
 
 La forma recomendada de usar Clipper es descargar una release.
 
-1. En GitHub, entra en **[Releases](https://github.com/TheMonster374/Clipper-desktop/releases/tag/v1.0.1)**.
+1. En GitHub, entra en **[Releases](https://github.com/TheMonster374/Clipper-desktop/releases)**.
 2. Descarga el paquete correspondiente a tu sistema operativo.
 3. Descomprime el archivo.
 4. Abre el ejecutable dentro de la carpeta `Clipper`.
@@ -94,6 +94,18 @@ Si quieres ejecutar las pruebas desde el código fuente:
 
 ```bash
 python3 -W error -m unittest discover -s tests -v
+```
+
+Si estás en Windows y usas el entorno virtual del proyecto:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Para abrir la interfaz desde el código fuente:
+
+```powershell
+.\.venv\Scripts\python.exe src\clipper_launcher.py
 ```
 ## `↗️ Próximos pasos`
 
