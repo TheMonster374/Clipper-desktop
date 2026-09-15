@@ -25,15 +25,40 @@ class ClipperApp:
 		self.root.minsize(760, 520)
 		self.downloads = downloads_dir()
 		self.rule_rows: list[tuple[tk.StringVar, tk.StringVar]] = []
+		self._configure_style()
 		self._build_ui()
 
+	def _configure_style(self) -> None:
+		style = ttk.Style(self.root)
+		try:
+			style.theme_use("clam")
+		except tk.TclError:
+			pass
+		style.configure("App.TFrame", background="#f4f6f8")
+		style.configure("Header.TFrame", background="#17212b")
+		style.configure("HeaderTitle.TLabel", background="#17212b", foreground="#ffffff", font=("TkDefaultFont", 18, "bold"))
+		style.configure("HeaderSubtitle.TLabel", background="#17212b", foreground="#b8c7d1", font=("TkDefaultFont", 9))
+		style.configure("Section.TLabel", background="#f4f6f8", foreground="#17212b", font=("TkDefaultFont", 10, "bold"))
+		style.configure("Primary.TButton", foreground="#ffffff", background="#1976d2", padding=(14, 8), font=("TkDefaultFont", 10, "bold"))
+		style.map("Primary.TButton", background=[("active", "#125ea7"), ("pressed", "#0d477d")])
+		style.configure("Status.TLabel", background="#e7edf2", foreground="#40515e", padding=(10, 6))
+		style.configure("Treeview", rowheight=28, font=("TkDefaultFont", 9))
+		style.configure("Treeview.Heading", background="#dce5eb", foreground="#17212b", font=("TkDefaultFont", 9, "bold"))
+
 	def _build_ui(self) -> None:
-		container = ttk.Frame(self.root, padding=16)
+		container = ttk.Frame(self.root, padding=16, style="App.TFrame")
 		container.pack(fill="both", expand=True)
 
-		ttk.Label(container, text="Carpeta a organizar").pack(anchor="w")
-		folder_row = ttk.Frame(container)
-		folder_row.pack(fill="x", pady=(4, 12))
+		header = ttk.Frame(container, padding=(18, 14), style="Header.TFrame")
+		header.pack(fill="x", pady=(0, 14))
+		ttk.Label(header, text="Clipper", style="HeaderTitle.TLabel").pack(anchor="w")
+		ttk.Label(header, text="Organizador de archivos para Linux Mint y Windows", style="HeaderSubtitle.TLabel").pack(anchor="w", pady=(2, 0))
+
+		folder_section = ttk.Frame(container, padding=(0, 0, 0, 12), style="App.TFrame")
+		folder_section.pack(fill="x")
+		ttk.Label(folder_section, text="Carpeta a organizar", style="Section.TLabel").pack(anchor="w")
+		folder_row = ttk.Frame(folder_section, style="App.TFrame")
+		folder_row.pack(fill="x", pady=(6, 0))
 		self.folder_var = tk.StringVar(value=str(self.downloads))
 		ttk.Entry(folder_row, textvariable=self.folder_var, state="readonly").pack(
 			side="left", fill="x", expand=True
@@ -41,7 +66,7 @@ class ClipperApp:
 		ttk.Button(folder_row, text="Cambiar...", command=self.choose_folder).pack(
 			side="left", padx=(8, 0)
 		)
-		ttk.Button(folder_row, text="Organizar archivos", command=self.organize).pack(
+		ttk.Button(folder_row, text="Organizar archivos", style="Primary.TButton", command=self.organize).pack(
 			side="left", padx=(8, 0)
 		)
 
@@ -57,8 +82,8 @@ class ClipperApp:
 		self._build_history_tab()
 		self._build_errors_tab()
 
-		self.status_var = tk.StringVar(value="Listo")
-		ttk.Label(container, textvariable=self.status_var).pack(anchor="w", pady=(10, 0))
+		self.status_var = tk.StringVar(value="Listo para organizar")
+		ttk.Label(container, textvariable=self.status_var, style="Status.TLabel").pack(fill="x", pady=(12, 0))
 
 	def _build_rules_tab(self) -> None:
 		ttk.Label(self.rules_frame, text="Extensión").grid(row=0, column=0, sticky="w")

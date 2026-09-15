@@ -1,8 +1,7 @@
 {
     ".pdf": "Documentos",
-    ".jpeg": "Imagenes",
     ".jpg": "Imagenes",
+    ".jpeg": "Imagenes",
     ".png": "Imagenes",
-    ".mp4": "Videos",
-    ".txt": "Texto"
+    ".mp4": "Videos"
 }
