@@ -24,7 +24,7 @@ if not logger.handlers:
 def friendly_error(error: Exception, action: str) -> str:
     """Convierte errores comunes del sistema en mensajes comprensibles."""
     if isinstance(error, PermissionError):
-        return f"{action}: no hay permisos suficientes o el archivo está en uso."
+        return f"{action}: no hay permisos suficientes para realizar la operación."
     if isinstance(error, FileNotFoundError):
         return f"{action}: no se encontró el archivo o la carpeta."
     if isinstance(error, IsADirectoryError):
